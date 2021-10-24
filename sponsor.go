@@ -1,52 +1,59 @@
 package main
 
 import (
-    "encoding/csv"
-    "fmt"
-    "log"
-    "os"
+	"encoding/csv"
+	"fmt"
+	"log"
+	"os"
 	"strings"
 )
 
 func readCsvFile(filePath string) [][]string {
-    f, err := os.Open(filePath)
-    if err != nil {
-        log.Fatal("Unable to read input file " + filePath, err)
-    }
-    defer f.Close()
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal("Unable to read input file "+filePath, err)
+	}
+	defer f.Close()
 
-    csvReader := csv.NewReader(f)
-    records, err := csvReader.ReadAll()
-    if err != nil {
-        log.Fatal("Unable to parse file as CSV for " + filePath, err)
-    }
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatal("Unable to parse file as CSV for "+filePath, err)
+	}
 
-    return records
+	return records
 }
 
-func main() {
-    records := readCsvFile("./tier2.csv")
+func massageData(resultData [][]string) ([]string, string) {
 	var result []string
 	args := os.Args[1:]
 	query := strings.Join(args, " ")
-	
+
+	if len(query) == 0 {
+		return nil, ""
+	}
+
+	var entry []string
+	for _, s := range resultData {
+		entry = append(entry, "\n"+s[0]+", "+s[1]+", "+s[2]+", "+s[3]+", "+s[4])
+	}
+
+	for _, res := range entry {
+		if strings.Contains(strings.ToLower(res), strings.ToLower(query)) {
+			result = append(result, res)
+		}
+	}
+	return result, query
+}
+
+func main() {
+	records := readCsvFile("./tier2.csv")
+	result, query := massageData(records)
+
 	if len(query) == 0 {
 		fmt.Println("Please provide an argument")
 		return
 	}
-	
-	var entry []string
-	for _, s := range records {
-		entry = append(entry, "\n" + s[0] + ", " + s[1] + ", " + s[2] + ", " + s[3] + ", " + s[4])
-	}	
-
-	for _, res := range entry {
-		if strings.Contains(strings.ToLower(res), strings.ToLower(query)) {
-			// result = res	
-			result = append(result, res)
-		} 
-	} 
-
 	if len(result) == 0 {
 		fmt.Printf("%s does not sponsor tier 2 work visas", query)
 		return
